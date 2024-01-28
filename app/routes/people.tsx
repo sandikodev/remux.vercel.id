@@ -7,22 +7,32 @@ objectivenes:
 3. loader function with pages rendering => common pages (some waterfall happen: by chunks or any assets)
 */
 
-import { LoaderFunction, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import { Form, useLoaderData } from "@remix-run/react";
+import { getData, updateData } from "~/utils/storages";
 
-export function loader() {
-  return json([
-    {
-      id: 1,
-      fName: "Sandiko",
-      lName: "Dev",
-    },
-    {
-      id: 2,
-      fName: "Second",
-      lName: "Name",
-    },
-  ]);
+export async function action({ request }: ActionFunctionArgs) {
+  let oldData = await getData();
+
+  let formData = await request.formData();
+  let values = {
+    fName: formData.get("fName") as string,
+    lName: formData.get("lName") as string,
+  };
+
+  let newData = oldData.concat({
+    id: oldData.length + 1,
+    ...values,
+  });
+
+  await updateData(newData);
+
+  return redirect("/people");
+}
+
+export async function loader() {
+  let data = await getData();
+  return json(data);
 }
 
 export default function Pages() {
@@ -32,14 +42,28 @@ export default function Pages() {
       <h1>people</h1>
       {people.length ? (
         <ul>
-          {people.map((person) => (
-            <li>
+          {people.map((person, id) => (
+            <li key={id}>
               {person.fName} {person.lName}
             </li>
           ))}
+          <li>
+            <Form method="POST">
+              <input type="text" name="fName" />
+              <input type="text" name="lName" />
+              <button type="submit">Add</button>
+            </Form>
+          </li>
         </ul>
       ) : (
-        <p>Nobody here been listed!</p>
+        <>
+          <h2>Nobody here been listed!</h2>
+          <Form method="POST">
+            <input type="text" name="fName" />
+            <input type="text" name="lName" />
+            <button type="submit">Add</button>
+          </Form>
+        </>
       )}
     </main>
   );
