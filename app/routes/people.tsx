@@ -9,24 +9,39 @@ objectivenes:
 
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import { getData, updateData } from "~/utils/storages";
+import { Person, getData, updateData } from "~/utils/storages";
 
 export async function action({ request }: ActionFunctionArgs) {
   let oldData = await getData();
+  let newData: Array<Person> = [];
 
   let formData = await request.formData();
-  let values = {
-    fName: formData.get("fName") as string,
-    lName: formData.get("lName") as string,
-  };
+  let isAction = formData.get("_action");
 
-  let newData = oldData.concat({
-    id: oldData.length + 1,
-    ...values,
-  });
+  switch (isAction) {
+    case "create":
+      let values = {
+        fName: formData.get("fName") as string,
+        lName: formData.get("lName") as string,
+      };
+
+      newData = oldData.concat({
+        id: oldData.length + 1,
+        ...values,
+      });
+
+      break;
+    case "delete":
+      let id = formData.get("unique") as string;
+      let unique_id = parseInt(id, 10);
+      newData = oldData.filter((data) => data.id != unique_id);
+      break;
+    default:
+      console.log("error, Action undefined!");
+      break;
+  }
 
   await updateData(newData);
-
   return redirect("/people");
 }
 
@@ -45,13 +60,21 @@ export default function Pages() {
           {people.map((person, id) => (
             <li key={id}>
               {person.fName} {person.lName}
+              <Form method="POST" style={{ display: "inline" }}>
+                <input type="hidden" name="unique" value={person.id} />
+                <button type="submit" name="_action" value="delete">
+                  X
+                </button>
+              </Form>
             </li>
           ))}
           <li>
             <Form method="POST">
               <input type="text" name="fName" />
               <input type="text" name="lName" />
-              <button type="submit">Add</button>
+              <button type="submit" name="_action" value="create">
+                Add
+              </button>
             </Form>
           </li>
         </ul>
@@ -61,7 +84,9 @@ export default function Pages() {
           <Form method="POST">
             <input type="text" name="fName" />
             <input type="text" name="lName" />
-            <button type="submit">Add</button>
+            <button type="submit" name="_action" value="create">
+              Add
+            </button>
           </Form>
         </>
       )}
