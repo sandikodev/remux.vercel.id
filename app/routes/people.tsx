@@ -8,7 +8,7 @@ objectivenes:
 */
 
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useLoaderData, useNavigation } from "@remix-run/react";
 import { Person, getData, updateData } from "~/utils/storages";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -52,6 +52,11 @@ export async function loader() {
 
 export default function Pages() {
   let people = useLoaderData<typeof loader>();
+  let navigation = useNavigation();
+  let isAdding =
+    navigation.state == "submitting" &&
+    navigation.formData?.get("_action") == "create";
+
   return (
     <main>
       <h1>people</h1>
@@ -72,9 +77,7 @@ export default function Pages() {
             <Form method="POST">
               <input type="text" name="fName" />
               <input type="text" name="lName" />
-              <button type="submit" name="_action" value="create">
-                Add
-              </button>
+              <ButtonWrapper state={isAdding} />
             </Form>
           </li>
         </ul>
@@ -84,12 +87,18 @@ export default function Pages() {
           <Form method="POST">
             <input type="text" name="fName" />
             <input type="text" name="lName" />
-            <button type="submit" name="_action" value="create">
-              Add
-            </button>
+            <ButtonWrapper state={isAdding} />
           </Form>
         </>
       )}
     </main>
   );
 }
+
+const ButtonWrapper = ({ state }: { state: boolean }) => {
+  return (
+    <button disabled={state} type="submit" name="_action" value="create">
+      {state ? "Adding" : "Add"}
+    </button>
+  );
+};
