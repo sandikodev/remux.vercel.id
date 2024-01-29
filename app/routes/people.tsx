@@ -9,6 +9,7 @@ objectivenes:
 
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigation } from "@remix-run/react";
+import { Ref, useEffect, useRef } from "react";
 import { Person, getData, updateData } from "~/utils/storages";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -57,6 +58,16 @@ export default function Pages() {
     navigation.state == "submitting" &&
     navigation.formData?.get("_action") == "create";
 
+  let formRef = useRef<HTMLFormElement>(null);
+  let inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isAdding) {
+      formRef.current?.reset();
+      inputRef.current?.focus();
+    }
+  }, [isAdding]);
+
   return (
     <main>
       <h1>people</h1>
@@ -74,8 +85,8 @@ export default function Pages() {
             </li>
           ))}
           <li>
-            <Form method="POST">
-              <input type="text" name="fName" />
+            <Form ref={formRef} method="POST">
+              <input ref={inputRef} type="text" name="fName" />
               <input type="text" name="lName" />
               <ButtonWrapper state={isAdding} />
             </Form>
@@ -84,7 +95,7 @@ export default function Pages() {
       ) : (
         <>
           <h2>Nobody here been listed!</h2>
-          <Form method="POST">
+          <Form ref={formRef} method="POST">
             <input type="text" name="fName" />
             <input type="text" name="lName" />
             <ButtonWrapper state={isAdding} />
