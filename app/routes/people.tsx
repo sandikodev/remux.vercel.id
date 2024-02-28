@@ -9,7 +9,7 @@ objectivenes:
 
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigation } from "@remix-run/react";
-import { Ref, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Person, getData, updateData } from "~/utils/storages";
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -74,15 +74,7 @@ export default function Pages() {
       {people.length ? (
         <ul>
           {people.map((person, id) => (
-            <li key={id}>
-              {person.fName} {person.lName}
-              <Form method="POST" style={{ display: "inline" }}>
-                <input type="hidden" name="unique" value={person.id} />
-                <button type="submit" name="_action" value="delete">
-                  X
-                </button>
-              </Form>
-            </li>
+            <People data={person} key={id} />
           ))}
           <li>
             <Form ref={formRef} method="POST">
@@ -111,5 +103,26 @@ const ButtonWrapper = ({ state }: { state: boolean }) => {
     <button disabled={state} type="submit" name="_action" value="create">
       {state ? "Adding" : "Add"}
     </button>
+  );
+};
+
+const People = ({ data }: { data: Person }) => {
+  let navigation = useNavigation();
+  let isDeleted =
+    (navigation.state == "submitting" || navigation.state == "loading") &&
+    navigation.formData?.get("_action") == "delete" &&
+    parseInt(navigation.formData?.get("unique") as string, 10) == data.id;
+
+  console.log(navigation);
+  return (
+    <li style={{ opacity: isDeleted ? 0.25 : 1 }}>
+      {data.fName} {data.lName}
+      <Form method="POST" style={{ display: "inline" }}>
+        <input type="hidden" name="unique" value={data.id} />
+        <button type="submit" name="_action" value="delete">
+          X
+        </button>
+      </Form>
+    </li>
   );
 };
